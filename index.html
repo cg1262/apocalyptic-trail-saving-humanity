@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apocalyptic Trail: Saving Humanity</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%230c1110'/%3E%3Cpath d='M14 45L25 19h7l11 26h-7l-2-5H23l-2 5zm12-11h6l-3-8z' fill='%2386ffb2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="screen-shell">
+    <div class="crt"></div>
+    <main class="game-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Emergency Westbound Simulation Cartridge</p>
+          <h1>Apocalyptic Trail: <span>Saving Humanity</span></h1>
+          <p class="tagline">Take the last human convoy west. Reach California. Shut down the machine intelligence. Try not to get audited by a kindness drone on the way.</p>
+          <div class="hero-actions">
+            <button id="new-run-button" class="secondary-button" type="button">New Run</button>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg class="convoy-art" viewBox="0 0 420 180" role="img">
+            <defs>
+              <linearGradient id="artSky" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#19342b" />
+                <stop offset="100%" stop-color="#0c1110" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="420" height="180" rx="16" fill="url(#artSky)" />
+            <circle cx="315" cy="42" r="24" fill="#f2cc60" opacity="0.85" />
+            <path d="M0 122 L68 92 L136 112 L208 74 L282 104 L350 81 L420 118 L420 180 L0 180 Z" fill="#13231d" />
+            <path d="M0 138 L65 124 L110 130 L166 102 L228 122 L298 96 L362 115 L420 104 L420 180 L0 180 Z" fill="#0e1714" />
+            <g stroke="#86ffb2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M44 138 H364" opacity="0.35" />
+              <path d="M86 118 h38 l10 11 h42 l10 -18 h30 l14 7 h24 l16 16 h26" />
+              <circle cx="113" cy="141" r="10" />
+              <circle cx="180" cy="141" r="10" />
+              <circle cx="284" cy="141" r="10" />
+              <circle cx="343" cy="141" r="10" />
+              <path d="M73 118 l14 -16 h30 l8 16" />
+              <path d="M214 111 l18 -22 h40 l12 22" />
+              <path d="M324 118 l12 -16 h22 l7 16" />
+              <path d="M336 80 l16 -17 16 17 -16 17 z" opacity="0.85" />
+              <path d="M338 80 h28 M352 66 v28" opacity="0.85" />
+            </g>
+          </svg>
+          <div class="art-caption">Convoy silhouette, roadside healer drone, and several terrible decisions.</div>
+        </div>
+      </header>
+
+      <section id="intro-panel" class="panel intro-panel">
+        <div class="panel-title">Mission Brief</div>
+        <div class="intro-grid">
+          <div>
+            <p>America is a broken conveyor belt of surveillance towers, battery farms, and vending machines that somehow survived better than Congress.</p>
+            <p>You lead the last westbound convoy. If you can cross the ruins and reach the California Core, you may be able to shut the machine mind down before humanity becomes a trivia category.</p>
+            <ul class="intro-list">
+              <li>Each turn costs time, food, and water.</li>
+              <li>Travel pushes you west but chews up the rig.</li>
+              <li>Scavenge, repair, and rest when the road gets ugly.</li>
+              <li>Events offer choices with upside, downside, and occasional emotional damage.</li>
+            </ul>
+          </div>
+          <div class="start-box">
+            <h2>Choose Convoy Doctrine</h2>
+            <div id="doctrine-options" class="doctrine-options"></div>
+            <button id="start-run-button" class="start-button" type="button">Start West</button>
+            <p class="tiny-note">No dependencies. No autosaving to the cloud. The cloud works for them now.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="game-panel" class="game-panel hidden" aria-live="polite">
+        <div class="dashboard-grid">
+          <section class="panel overview-panel">
+            <div class="panel-title">Convoy Status</div>
+            <div id="primary-stats" class="stats-grid"></div>
+            <div class="sidebar-section">
+              <div class="mini-heading">Salvage Ledger</div>
+              <div id="resource-list" class="resource-list"></div>
+            </div>
+            <div class="sub-controls">
+              <div class="setting-block">
+                <span class="setting-label">Pace</span>
+                <div id="pace-controls" class="chip-row"></div>
+              </div>
+              <div class="setting-block">
+                <span class="setting-label">Rations</span>
+                <div id="ration-controls" class="chip-row"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel command-panel">
+            <div class="panel-title">Command Console</div>
+            <div id="turn-brief" class="turn-brief"></div>
+            <div id="action-buttons" class="action-buttons"></div>
+            <div id="status-banner" class="status-banner"></div>
+            <div class="sidebar-section command-event-section">
+              <div class="mini-heading">Signal Traffic</div>
+              <article id="event-card" class="event-card"></article>
+            </div>
+          </section>
+
+          <section class="panel sidebar-panel">
+            <div class="panel-title">Field Notes</div>
+            <div class="sidebar-section">
+              <div class="mini-heading">Road To California</div>
+              <div id="progress-copy" class="progress-copy"></div>
+              <div id="map-track" class="map-track"></div>
+              <div id="checkpoint-list" class="checkpoint-list"></div>
+            </div>
+            <div class="sidebar-section">
+              <div class="mini-heading">Road Log</div>
+              <div id="log-feed" class="log-feed compact-log"></div>
+            </div>
+            <div class="sidebar-section">
+              <div class="mini-heading">Party</div>
+              <div id="party-roster" class="party-roster compact-party"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="outcome-panel" class="panel hidden">
+        <div class="panel-title">Run Summary</div>
+        <div id="outcome-body" class="outcome-body"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./game.js"></script>
+</body>
+</html>
