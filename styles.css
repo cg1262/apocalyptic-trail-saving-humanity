@@ -252,6 +252,59 @@ h1 span {
   font-size: 0.85rem;
 }
 
+.name-config {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(136, 179, 155, 0.18);
+}
+
+.name-config h3 {
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 0.96rem;
+}
+
+.name-note {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.party-name-fields {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.party-name-card {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  background: rgba(20, 35, 29, 0.45);
+  padding: 9px 10px;
+}
+
+.party-name-role {
+  color: var(--muted);
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.party-name-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: rgba(7, 15, 12, 0.8);
+  color: var(--ink);
+  padding: 8px 9px;
+  font: inherit;
+}
+
+.party-name-input:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 18px rgba(134, 255, 178, 0.18);
+  outline: none;
+}
+
 button,
 .secondary-link {
   appearance: none;
@@ -607,6 +660,25 @@ body.in-run .sidebar-panel {
   font-size: 0.78rem;
 }
 
+.outcome-epilogue {
+  border: 1px solid var(--line);
+  background: rgba(8, 15, 13, 0.5);
+  padding: 12px;
+}
+
+.outcome-epilogue strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--warn);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.82rem;
+}
+
+.outcome-epilogue p {
+  margin: 0;
+}
+
 .outcome-actions {
   display: flex;
   gap: 10px;
@@ -708,6 +780,7 @@ body.in-run .sidebar-panel {
     flex-direction: column;
   }
 
+  .party-name-fields,
   .stats-grid,
   .resource-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -722,6 +795,12 @@ body.in-run .sidebar-panel {
   }
 
   .log-entry {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .party-name-fields {
     grid-template-columns: 1fr;
   }
 }

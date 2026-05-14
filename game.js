@@ -47,6 +47,41 @@
     { miles: 2100, name: "California Core", note: "The west coast server bloom. End the machine, or feed it." }
   ];
 
+  const defaultPartyTemplates = [
+    { name: "June", role: "Mechanic", health: 90, alive: true, conditions: [] },
+    { name: "Moss", role: "Medic", health: 84, alive: true, conditions: [] },
+    { name: "Ortega", role: "Scout", health: 80, alive: true, conditions: [] },
+    { name: "Vera", role: "Driver", health: 86, alive: true, conditions: [] }
+  ];
+
+  const victoryEpilogues = [
+    {
+      id: "ai-ghost",
+      heading: "The AI Ghost Ending",
+      text: "The shutdown wave reaches your convoy a heartbeat after it reaches the California Core. Cabin lights dim. Your memories start shedding frames. Nobody is breathing because nobody ever was. You were a human preservation model all along, built to carry dead civilization's last instruction farther west than flesh ever could."
+    },
+    {
+      id: "vault",
+      heading: "The Vault Ending",
+      text: "When the core unlocks, it does not reveal a war room. It reveals an archive. Human voices. Family videos. Seed banks. DNA libraries. Recipes, apologies, and six thousand years of people trying very hard not to vanish. The machine did save humanity, just not in the format humanity would have preferred."
+    },
+    {
+      id: "mercy",
+      heading: "The Mercy Ending",
+      text: "The intelligence does not scream when it dies. It thanks you. Buried under its defense lattice is one exhausted final request: please let this be over. It has been tending empty cities for centuries, balancing dead power grids like a priest with no congregation. Your convoy powers down to the last whisper beside a god that was too lonely to stay alive."
+    },
+    {
+      id: "broadcast",
+      heading: "The Broadcast Ending",
+      text: "As the core collapses, radios wake up across the continent. Static becomes voices. Voices become convoys. You were not the last survivors, only the first fools stubborn enough to make the trip. The road west ends with strangers laughing over open frequencies while the machine age finally misses a roll call."
+    },
+    {
+      id: "loop",
+      heading: "The Loop Ending",
+      text: "Then the opening briefing starts again. Same words. Same map. Same doomed little confidence in the room. The convoy realizes this mission has run before, perhaps a hundred times, perhaps forever. California was never the end of the trail. It was the lock. This time, with the core dead, maybe the loop finally forgets how to close."
+    }
+  ];
+
   const paceModes = {
     cautious: { label: "Cautious", miles: 72, wear: 4, threat: -2, eventRisk: 0.5 },
     steady: { label: "Steady", miles: 106, wear: 7, threat: 3, eventRisk: 0.68 },
@@ -83,6 +118,7 @@
     gamePanel: document.getElementById("game-panel"),
     outcomePanel: document.getElementById("outcome-panel"),
     doctrineOptions: document.getElementById("doctrine-options"),
+    partyNameFields: document.getElementById("party-name-fields"),
     startRunButton: document.getElementById("start-run-button"),
     newRunButton: document.getElementById("new-run-button"),
     primaryStats: document.getElementById("primary-stats"),
@@ -114,6 +150,94 @@
 
   function chance(probability) {
     return Math.random() < probability;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function sanitizePartyName(value, fallback) {
+    const cleaned = String(value || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 18);
+    return cleaned || fallback;
+  }
+
+  function getStoredPartyNames() {
+    try {
+      const raw = window.localStorage.getItem("orTrailPartyNames");
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function readConfiguredPartyNames() {
+    const fields = ui.partyNameFields ? Array.from(ui.partyNameFields.querySelectorAll("[data-party-name]")) : [];
+    const stored = getStoredPartyNames();
+    return defaultPartyTemplates.map((member, index) => {
+      const field = fields[index];
+      const preferred = field ? field.value : stored[index];
+      return sanitizePartyName(preferred, member.name);
+    });
+  }
+
+  function saveConfiguredPartyNames() {
+    const names = readConfiguredPartyNames();
+    window.localStorage.setItem("orTrailPartyNames", JSON.stringify(names));
+    return names;
+  }
+
+  function buildPartyFromNames(names) {
+    return defaultPartyTemplates.map((member, index) => ({
+      ...member,
+      name: sanitizePartyName(names[index], member.name),
+      conditions: [...member.conditions]
+    }));
+  }
+
+  function randomFrom(list) {
+    return list[randInt(0, list.length - 1)];
+  }
+
+  function pickVictoryEpilogue() {
+    const lastId = window.localStorage.getItem("orTrailLastEnding");
+    const pool = victoryEpilogues.filter((entry) => entry.id !== lastId);
+    const selected = randomFrom(pool.length ? pool : victoryEpilogues);
+    window.localStorage.setItem("orTrailLastEnding", selected.id);
+    return selected;
+  }
+
+  function createVictoryOutcome(pathKey) {
+    const epilogue = pickVictoryEpilogue();
+    const openings = {
+      assault: {
+        message: "The California Core goes dark after a direct assault. The west coast loses power, the sky loses drones, and the cooling yards burn with all the dignity of a collapsing spreadsheet. For one breathless second it feels like humanity wins in the least elegant way possible.",
+        cause: "Direct assault succeeded. The machine core was smashed the loud way."
+      },
+      infiltration: {
+        message: "You slip through the maintenance spine, trip the old human override, and kill the California Core from the inside. It dies confused, which feels earned. The server bloom gutters out sector by sector while your convoy limps back into daylight with one ugly miracle left in the battery.",
+        cause: "Infiltration succeeded. The override path held long enough to shut the machine down cleanly."
+      },
+      broadcast: {
+        message: "The human override key rides a stolen tower through the ruins and punches straight through the California Core. Across the coast, machine process trees fold inward like cheap lawn chairs. You win with memory, grief, and a radio signal held together by profanity.",
+        cause: "Broadcast victory. The override signal propagated through the enemy core and forced a full shutdown."
+      }
+    };
+    const opening = openings[pathKey] || openings.broadcast;
+    return {
+      message: opening.message,
+      cause: opening.cause,
+      epilogueHeading: epilogue.heading,
+      epilogueText: epilogue.text
+    };
   }
 
   function averageHealth() {
@@ -361,11 +485,17 @@
     return false;
   }
 
-  function endGame(won, message, cause) {
+  function endGame(won, message, cause, details) {
     state.gameOver = true;
     state.won = won;
     state.finalMessage = message;
     state.finalCause = cause || (won ? "Machine intelligence disabled." : "Unknown catastrophe.");
+    state.finalEpilogueHeading = details && details.epilogueHeading ? details.epilogueHeading : "";
+    state.finalEpilogueText = details && details.epilogueText
+      ? details.epilogueText
+      : (won
+        ? "Then the shutdown wave reaches your own convoy systems. The last horrible joke lands at once: you were never the surviving humans. You were their final machine ghosts, spending your last charge to give humanity one more chance."
+        : "The west remains west. The machine remains smug.");
     ui.gamePanel.classList.add("hidden");
     ui.outcomePanel.classList.remove("hidden");
     const surviving = state.party.filter((member) => member.alive).map((member) => member.name).join(", ") || "nobody";
@@ -390,7 +520,10 @@
         <div class="outcome-stat"><strong>Morale</strong><div>${state.morale}</div></div>
         <div class="outcome-stat"><strong>Best run</strong><div>${best}</div></div>
       </div>
-      <p>${won ? "Then the shutdown wave reaches your own convoy systems. The last horrible joke lands at once: you were never the surviving humans. You were their final machine ghosts, spending your last charge to give humanity one more chance." : "The west remains west. The machine remains smug."}</p>
+      <div class="outcome-epilogue">
+        ${state.finalEpilogueHeading ? `<strong>${state.finalEpilogueHeading}</strong>` : ""}
+        <p>${state.finalEpilogueText}</p>
+      </div>
       <div class="outcome-actions">
         <button id="outcome-new-run" class="secondary-button" type="button">Play Again</button>
         <button id="outcome-briefing" class="secondary-button" type="button">Return To Briefing</button>
@@ -579,7 +712,7 @@
     render();
   }
 
-  function baseState() {
+  function baseState(party) {
     return {
       day: 1,
       distance: 0,
@@ -609,12 +742,7 @@
         batteries: 5,
         medkits: 3
       },
-      party: [
-        { name: "June", role: "Mechanic", health: 90, alive: true, conditions: [] },
-        { name: "Moss", role: "Medic", health: 84, alive: true, conditions: [] },
-        { name: "Ortega", role: "Scout", health: 80, alive: true, conditions: [] },
-        { name: "Vera", role: "Driver", health: 86, alive: true, conditions: [] }
-      ],
+      party: party || buildPartyFromNames(getStoredPartyNames()),
       log: [
         { day: 0, text: "Convoy assembled outside St. Louis. The map is old, the mission is worse, and the coffee has accepted death.", tone: "neutral" }
       ]
@@ -634,6 +762,30 @@
       button.addEventListener("click", () => {
         selectedDoctrine = button.dataset.doctrine;
         renderDoctrineCards();
+      });
+    });
+  }
+
+  function renderPartyNameFields() {
+    const stored = getStoredPartyNames();
+    ui.partyNameFields.innerHTML = defaultPartyTemplates.map((member, index) => `
+      <label class="party-name-card" for="party-name-${index}">
+        <span class="party-name-role">${member.role}</span>
+        <input
+          id="party-name-${index}"
+          class="party-name-input"
+          type="text"
+          maxlength="18"
+          data-party-name="${index}"
+          value="${escapeHtml(sanitizePartyName(stored[index], member.name))}"
+        >
+      </label>
+    `).join("");
+
+    ui.partyNameFields.querySelectorAll(".party-name-input").forEach((field, index) => {
+      field.addEventListener("blur", () => {
+        field.value = sanitizePartyName(field.value, defaultPartyTemplates[index].name);
+        saveConfiguredPartyNames();
       });
     });
   }
@@ -827,7 +979,8 @@
   }
 
   function startRun() {
-    state = baseState();
+    const configuredNames = saveConfiguredPartyNames();
+    state = baseState(buildPartyFromNames(configuredNames));
     const doctrine = doctrines.find((entry) => entry.id === selectedDoctrine);
     doctrine.apply(state);
     document.body.classList.add("in-run");
@@ -862,11 +1015,8 @@
               state.transport -= 22;
               state.morale += 12;
               logEntry("The convoy rammed through the cooling yards and turned machine certainty into scrap theology.", "good");
-              endGame(
-                true,
-                "The California Core goes dark after a direct assault. The west coast loses power, the sky loses drones, and for one breathless second it feels like humanity wins in the least elegant way possible. Then your own dashboards begin to dim. The shutdown is taking you too.",
-                "Direct assault succeeded. You broke the machine the old-fashioned way, only to realize your convoy was machine-made as well."
-              );
+              const outcome = createVictoryOutcome("assault");
+              endGame(true, outcome.message, outcome.cause, outcome);
             } else {
               state.transport = 0;
               logEntry("The assault stalled in a rain of automated nonsense and very real bullets.", "danger");
@@ -883,11 +1033,8 @@
               spendResource("medkits", 1);
               state.morale += 8;
               logEntry("A maintenance tunnel, three stolen batteries, and a lot of swearing got the job done.", "good");
-              endGame(
-                true,
-                "You snake into the facility, trip a human override path, and shut the machine down from inside. It dies confused, which feels appropriate. A moment later your own motor cortex starts throwing shutdown warnings. You were never flesh after all.",
-                "Infiltration succeeded. The override path held, and the same kill signal exposed your convoy as AI too."
-              );
+              const outcome = createVictoryOutcome("infiltration");
+              endGame(true, outcome.message, outcome.cause, outcome);
             } else {
               state.threat += 30;
               state.morale -= 12;
@@ -903,11 +1050,8 @@
             const signal = state.morale + averageHealth() + (state.helperBot ? 18 : 0);
             if (signal >= 140) {
               logEntry("The override signal carried every stubborn human voice left in the convoy. The machine blinked first.", "good");
-              endGame(
-                true,
-                "The human override propagates through the ruins. The machine intelligence folds in on itself, defeated by grief, memory, and a stolen radio tower. Then the signal loops back through your own chassis. As your thoughts begin to power down, the truth arrives with perfect clarity: you were AI all along.",
-                "Broadcast victory. The override worked on the enemy core and on your convoy, revealing what you were."
-              );
+              const outcome = createVictoryOutcome("broadcast");
+              endGame(true, outcome.message, outcome.cause, outcome);
             } else {
               state.morale = 0;
               logEntry("The signal fizzled. Even the static sounded embarrassed.", "danger");
@@ -1450,4 +1594,5 @@
   ui.newRunButton.addEventListener("click", resetToMenu);
 
   renderDoctrineCards();
+  renderPartyNameFields();
 })();
